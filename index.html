@@ -1,191 +1,1254 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TTS Asam Basa Challenge</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(#fce4ec, #e3f2fd);
-      text-align: center;
-      padding: 20px;
-    }
-    .screen {
-      display: none;
-    }
-    .active {
-      display: block;
-    }
-    .button {
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(6, 40px);
-      justify-content: center;
-      margin: 20px auto;
-    }
-    .cell {
-      border: 1px solid #000;
-      width: 40px;
-      height: 40px;
-      text-align: center;
-      font-size: 18px;
-    }
-    .correct {
-      background-color: #a5d6a7;
-    }
-    .incorrect {
-      background-color: #ef9a9a;
-    }
-    .clues {
-      text-align: left;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asam Basa Challenge: Teka-Teki Seru! (TTS)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .grid-cell {
+            transition: all 0.2s ease;
+        }
+        
+        .grid-cell:focus {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+        
+        .correct {
+            background-color: #4ade80 !important;
+            color: white;
+        }
+        
+        .incorrect {
+            background-color: #f87171 !important;
+            color: white;
+        }
+        
+        .hint-used {
+            background-color: #fbbf24 !important;
+            color: white;
+        }
+        
+        .timer-animation {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .lab-bg {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%23e0e7ff" width="50" height="50" x="0" y="0"></rect><rect fill="%23c7d2fe" width="50" height="50" x="50" y="50"></rect><path fill="%23a5b4fc" d="M50 0 L100 0 L100 50 L50 50 Z"></path><path fill="%23818cf8" d="M0 50 L50 50 L50 100 L0 100 Z"></path></svg>');
+            background-size: 40px 40px;
+        }
+    </style>
 </head>
-<body>
-  <div id="startScreen" class="screen active">
-    <h1>TTS Asam Basa Challenge: Teka Teki Seru!</h1>
-    <button class="button" onclick="showScreen('instructionScreen')">Cara Bermain</button>
-    <button class="button" onclick="startGame()">Mulai</button>
-    <button class="button" onclick="alert('Terima kasih telah bermain!')">Keluar</button>
-  </div>
-
-  <div id="instructionScreen" class="screen">
-    <h2>Petunjuk Permainan</h2>
-    <p>Isi kotak teka-teki silang berdasarkan petunjuk soal.</p>
-    <p>Jawaban harus sesuai dengan konsep asam basa.</p>
-    <p>Durasi permainan: 3 menit.</p>
-    <p>Gunakan fitur "Hint" maksimal 3 kali.</p>
-    <p>Skor dihitung dari jawaban benar + bonus waktu.</p>
-    <button class="button" onclick="showScreen('startScreen')">Kembali ke Menu</button>
-    <button class="button" onclick="startGame()">Mulai Bermain</button>
-  </div>
-
-  <div id="gameScreen" class="screen">
-    <h2>Teka-Teki Silang Asam Basa</h2>
-    <div class="grid" id="grid"></div>
-    <div class="clues">
-      <h3>Petunjuk:</h3>
-      <p><strong>Horizontal:</strong></p>
-      <ul>
-        <li>1. Senyawa yang melepaskan ion H+ dalam air</li>
-        <li>3. Alat pengukur keasaman</li>
-        <li>4. Rentang nilai pH 0-14</li>
-        <li>5. Produk reaksi asam dan basa</li>
-      </ul>
-      <p><strong>Vertikal:</strong></p>
-      <ul>
-        <li>2. Senyawa yang melepaskan ion OH- dalam air</li>
-      </ul>
+<body class="relative overflow-x-hidden">
+    <!-- Start Screen -->
+    <div id="start-screen" class="fixed inset-0 flex flex-col items-center justify-center lab-bg z-50 transition-all duration-500">
+        <div class="text-center px-6 py-8 bg-white/90 rounded-xl shadow-2xl max-w-2xl mx-4 floating">
+            <h1 class="text-5xl font-bold mb-6 bg-gradient-to-r from-pink-600 to-blue-600 bg-clip-text text-transparent">
+                TTS Asam Basa Challenge
+            </h1>
+            <p class="text-gray-700 mb-8 text-lg">
+                Uji pengetahuanmu tentang konsep asam dan basa dalam bentuk teka-teki silang yang seru!
+            </p>
+            <div class="flex flex-col space-y-4 max-w-xs mx-auto">
+                <button onclick="showScreen('game-screen')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-play mr-2"></i> Mulai Bermain
+                </button>
+                <button onclick="showScreen('instructions-screen')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-info-circle mr-2"></i> Cara Bermain
+                </button>
+                <button onclick="confirmExit()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full transition-all transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-door-open mr-2"></i> Keluar
+                </button>
+            </div>
+        </div>
+        <div class="absolute bottom-4 text-gray-600 text-sm">
+            Game Edukasi Kimia untuk SMA
+        </div>
     </div>
-    <div>
-      <button class="button" onclick="useHint()">Hint (tersisa: <span id="hintCount">3</span>)</button>
-      <button class="button" onclick="checkAnswers()">Selesai</button>
-      <button class="button" onclick="resetGrid()">Reset</button>
-      <button class="button" onclick="showScreen('startScreen')">Back</button>
+
+    <!-- Instructions Screen -->
+    <div id="instructions-screen" class="fixed inset-0 bg-white z-40 hidden overflow-y-auto p-4">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-blue-600">
+                    <i class="fas fa-book-open mr-2"></i> Cara Bermain
+                </h2>
+                <button onclick="showScreen('start-screen')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition-all">
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold text-blue-800 mb-3 flex items-center">
+                        <i class="fas fa-crosshairs mr-2"></i> Tujuan Permainan
+                    </h3>
+                    <p class="text-gray-700">
+                        Isi semua kotak teka-teki silang dengan jawaban yang benar berdasarkan petunjuk yang diberikan. Jawaban berkaitan dengan konsep asam-basa dalam kimia.
+                    </p>
+                </div>
+                
+                <div class="bg-purple-50 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold text-purple-800 mb-3 flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i> Level Kesulitan
+                    </h3>
+                    <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                        <li><span class="font-semibold">Mudah:</span> Grid 6x6, 8 soal, waktu 3 menit</li>
+                        <li><span class="font-semibold">Sedang:</span> Grid 8x8, 12 soal, waktu 5 menit</li>
+                        <li><span class="font-semibold">Sulit:</span> Grid 10x10, 15-20 soal, waktu 8 menit</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="bg-yellow-50 p-6 rounded-lg mb-8">
+                <h3 class="text-xl font-semibold text-yellow-800 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i> Fitur Bantuan
+                </h3>
+                <div class="flex items-start mb-4">
+                    <div class="bg-yellow-200 text-yellow-800 rounded-full p-2 mr-3">
+                        <i class="fas fa-stopwatch"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold">Timer</h4>
+                        <p class="text-gray-700 text-sm">Waktu akan terus berjalan sampai habis atau semua jawaban terisi.</p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <div class="bg-yellow-200 text-yellow-800 rounded-full p-2 mr-3">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold">Hint (Petunjuk)</h4>
+                        <p class="text-gray-700 text-sm">Anda bisa menggunakan maksimal 3 hint per level. Setiap hint akan membuka satu huruf jawaban.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-green-50 p-6 rounded-lg mb-8">
+                <h3 class="text-xl font-semibold text-green-800 mb-3 flex items-center">
+                    <i class="fas fa-star mr-2"></i> Sistem Skor
+                </h3>
+                <p class="text-gray-700 mb-2">
+                    Skor dihitung berdasarkan:
+                </p>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <li>Setiap jawaban benar = 10 poin</li>
+                    <li>Bonus waktu = (sisa waktu dalam detik) × 0.5 poin</li>
+                    <li>Penggunaan hint mengurangi bonus waktu</li>
+                </ul>
+            </div>
+            
+            <div class="flex justify-center mt-8">
+                <button onclick="startGame('easy')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center">
+                    <i class="fas fa-play mr-2"></i> Mulai Bermain
+                </button>
+            </div>
+        </div>
     </div>
-    <p id="timer">Waktu: 180</p>
-  </div>
 
-  <div id="resultScreen" class="screen">
-    <h2>Hasil Permainan</h2>
-    <p id="score"></p>
-    <button class="button" onclick="startGame()">Main Lagi</button>
-    <button class="button" onclick="showScreen('startScreen')">Kembali ke Menu</button>
-  </div>
+    <!-- Level Selection Screen -->
+    <div id="level-screen" class="fixed inset-0 bg-white z-40 hidden overflow-y-auto p-4">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl p-6">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-blue-600">
+                    <i class="fas fa-layer-group mr-2"></i> Pilih Level Kesulitan
+                </h2>
+                <button onclick="showScreen('start-screen')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition-all">
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali
+                </button>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Easy Level -->
+                <div class="bg-blue-50 p-6 rounded-xl border-2 border-blue-200 hover:border-blue-400 transition-all transform hover:scale-105 cursor-pointer" onclick="startGame('easy')">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xl font-bold text-blue-800">Level Mudah</h3>
+                        <span class="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">Pemula</span>
+                    </div>
+                    <div class="flex items-center text-blue-700 mb-3">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Waktu: 3 menit</span>
+                    </div>
+                    <div class="flex items-center text-blue-700 mb-3">
+                        <i class="fas fa-th mr-2"></i>
+                        <span>Grid: 6x6</span>
+                    </div>
+                    <div class="flex items-center text-blue-700 mb-4">
+                        <i class="fas fa-question-circle mr-2"></i>
+                        <span>8 soal</span>
+                    </div>
+                    <div class="bg-blue-100 text-blue-800 p-3 rounded-lg text-sm">
+                        Cocok untuk yang baru mempelajari konsep asam-basa
+                    </div>
+                </div>
+                
+                <!-- Medium Level -->
+                <div class="bg-purple-50 p-6 rounded-xl border-2 border-purple-200 hover:border-purple-400 transition-all transform hover:scale-105 cursor-pointer" onclick="startGame('medium')">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xl font-bold text-purple-800">Level Sedang</h3>
+                        <span class="bg-purple-200 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">Menengah</span>
+                    </div>
+                    <div class="flex items-center text-purple-700 mb-3">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Waktu: 5 menit</span>
+                    </div>
+                    <div class="flex items-center text-purple-700 mb-3">
+                        <i class="fas fa-th mr-2"></i>
+                        <span>Grid: 8x8</span>
+                    </div>
+                    <div class="flex items-center text-purple-700 mb-4">
+                        <i class="fas fa-question-circle mr-2"></i>
+                        <span>12 soal</span>
+                    </div>
+                    <div class="bg-purple-100 text-purple-800 p-3 rounded-lg text-sm">
+                        Untuk yang sudah memahami dasar-dasar asam-basa
+                    </div>
+                </div>
+                
+                <!-- Hard Level -->
+                <div class="bg-red-50 p-6 rounded-xl border-2 border-red-200 hover:border-red-400 transition-all transform hover:scale-105 cursor-pointer" onclick="startGame('hard')">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-xl font-bold text-red-800">Level Sulit</h3>
+                        <span class="bg-red-200 text-red-800 px-3 py-1 rounded-full text-sm font-semibold">Ahli</span>
+                    </div>
+                    <div class="flex items-center text-red-700 mb-3">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Waktu: 8 menit</span>
+                    </div>
+                    <div class="flex items-center text-red-700 mb-3">
+                        <i class="fas fa-th mr-2"></i>
+                        <span>Grid: 10x10</span>
+                    </div>
+                    <div class="flex items-center text-red-700 mb-4">
+                        <i class="fas fa-question-circle mr-2"></i>
+                        <span>15-20 soal</span>
+                    </div>
+                    <div class="bg-red-100 text-red-800 p-3 rounded-lg text-sm">
+                        Tantangan untuk yang menguasai konsep asam-basa lanjutan
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <script>
-    let correctAnswers = {
-      '0': 'A', '1': 'S', '2': 'A', '3': 'M',
-      '6': 'B', '12': 'A', '18': 'S', '24': 'A',
-      '30': 'P', '31': 'H', '32': 'M', '33': 'E', '34': 'T', '35': 'E', '36': 'R',
-      '40': 'S', '41': 'K', '42': 'A', '43': 'L', '44': 'A', '45': 'P', '46': 'H',
-      '50': 'G', '51': 'A', '52': 'R', '53': 'A', '54': 'M'
-    };
+    <!-- Game Screen -->
+    <div id="game-screen" class="fixed inset-0 bg-gray-100 z-30 hidden overflow-y-auto p-4">
+        <div class="max-w-6xl mx-auto">
+            <!-- Game Header -->
+            <div class="flex flex-wrap justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-md">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-600">
+                        <span id="level-indicator">Level Mudah</span>
+                    </h2>
+                    <div class="flex items-center text-gray-600 mt-1">
+                        <i class="fas fa-crosshairs mr-2"></i>
+                        <span id="progress-indicator">0/8 soal terjawab</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full flex items-center">
+                        <i class="fas fa-stopwatch mr-2"></i>
+                        <span id="timer">03:00</span>
+                    </div>
+                    
+                    <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full flex items-center">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        <span id="hint-count">3</span> hint tersisa
+                    </div>
+                    
+                    <button onclick="showScreen('level-screen')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition-all">
+                        <i class="fas fa-arrow-left mr-1"></i> Kembali
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Game Content -->
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Crossword Grid -->
+                <div class="bg-white p-6 rounded-xl shadow-md flex-1">
+                    <div id="crossword-grid" class="grid gap-1 mx-auto">
+                        <!-- Grid will be generated by JavaScript -->
+                    </div>
+                    
+                    <div class="flex justify-center space-x-4 mt-6">
+                        <button onclick="useHint()" id="hint-button" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-full transition-all flex items-center">
+                            <i class="fas fa-lightbulb mr-2"></i> Hint
+                        </button>
+                        <button onclick="checkAnswers()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-all flex items-center">
+                            <i class="fas fa-check-circle mr-2"></i> Periksa
+                        </button>
+                        <button onclick="resetCurrentAnswer()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-all flex items-center">
+                            <i class="fas fa-undo mr-2"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Clues Section -->
+                <div class="bg-white p-6 rounded-xl shadow-md lg:w-80">
+                    <div class="flex border-b-2 border-gray-200 pb-2 mb-4">
+                        <button id="horizontal-tab" class="font-bold text-blue-600 px-4 py-2 border-b-2 border-blue-600">Horizontal</button>
+                        <button id="vertical-tab" class="font-bold text-gray-600 px-4 py-2">Vertikal</button>
+                    </div>
+                    
+                    <div id="horizontal-clues" class="space-y-4">
+                        <h3 class="font-bold text-lg text-gray-800 mb-3">Petunjuk Horizontal</h3>
+                        <div id="horizontal-clues-list" class="space-y-3">
+                            <!-- Horizontal clues will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div id="vertical-clues" class="space-y-4 hidden">
+                        <h3 class="font-bold text-lg text-gray-800 mb-3">Petunjuk Vertikal</h3>
+                        <div id="vertical-clues-list" class="space-y-3">
+                            <!-- Vertical clues will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    let hintCount = 3;
-    let timerInterval;
-    let timeLeft = 180;
+    <!-- Results Screen -->
+    <div id="results-screen" class="fixed inset-0 bg-white z-20 hidden overflow-y-auto p-4">
+        <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-xl p-6">
+            <div class="text-center mb-8">
+                <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-trophy text-4xl text-yellow-500"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">
+                    <span id="result-title">Hasil Permainan</span>
+                </h2>
+                <p class="text-gray-600">
+                    <span id="level-result">Level Mudah</span> selesai!
+                </p>
+            </div>
+            
+            <div class="bg-gray-50 p-6 rounded-xl mb-6">
+                <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600" id="correct-answers">0</div>
+                        <div class="text-gray-600">Jawaban Benar</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-red-600" id="wrong-answers">0</div>
+                        <div class="text-gray-600">Jawaban Salah</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-green-600" id="total-score">0</div>
+                        <div class="text-gray-600">Total Skor</div>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold">Bonus Waktu:</span>
+                        <span id="time-bonus">0</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold">Penggunaan Hint:</span>
+                        <span id="hint-penalty">0</span>
+                    </div>
+                    <div class="flex justify-between items-center font-bold text-lg border-t border-gray-200 pt-2">
+                        <span>Total Skor:</span>
+                        <span id="final-score">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="feedback-message" class="text-center p-4 rounded-lg mb-6 bg-blue-50 text-blue-800">
+                <!-- Feedback will be inserted here -->
+            </div>
+            
+            <div class="flex flex-col space-y-3">
+                <button onclick="nextLevelOrRestart()" id="next-level-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-all">
+                    <i class="fas fa-arrow-right mr-2"></i> Lanjut ke Level Berikutnya
+                </button>
+                <button onclick="showScreen('start-screen')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full transition-all">
+                    <i class="fas fa-home mr-2"></i> Kembali ke Menu Utama
+                </button>
+                <button onclick="showExplanation()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition-all">
+                    <i class="fas fa-book mr-2"></i> Lihat Pembahasan
+                </button>
+            </div>
+        </div>
+    </div>
 
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
+    <!-- Explanation Screen -->
+    <div id="explanation-screen" class="fixed inset-0 bg-white z-10 hidden overflow-y-auto p-4">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold text-purple-600">
+                    <i class="fas fa-book-open mr-2"></i> Pembahasan Jawaban
+                </h2>
+                <button onclick="showScreen('results-screen')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full transition-all">
+                    <i class="fas fa-arrow-left mr-1"></i> Kembali
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">
+                    <span id="explanation-level">Level Mudah</span> - Pembahasan
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Berikut adalah penjelasan untuk semua soal pada level ini:
+                </p>
+                
+                <div id="explanation-content" class="space-y-4">
+                    <!-- Explanations will be generated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="flex justify-center mt-8">
+                <button onclick="showScreen('results-screen')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Kembali ke Hasil
+                </button>
+            </div>
+        </div>
+    </div>
 
-    function startGame() {
-      showScreen('gameScreen');
-      hintCount = 3;
-      document.getElementById('hintCount').textContent = hintCount;
-      timeLeft = 180;
-      document.getElementById('timer').textContent = 'Waktu: ' + timeLeft;
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        document.getElementById('timer').textContent = 'Waktu: ' + timeLeft;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          checkAnswers();
+    <!-- Confirmation Dialog -->
+    <div id="confirm-dialog" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Konfirmasi</h3>
+                <p class="text-gray-600" id="confirm-message">Apakah Anda yakin ingin keluar dari permainan?</p>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button onclick="hideConfirmDialog()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all">
+                    Batal
+                </button>
+                <button onclick="confirmAction()" id="confirm-action-button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full transition-all">
+                    Ya, Keluar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game data
+        const gameData = {
+            easy: {
+                gridSize: 6,
+                timeLimit: 180, // 3 minutes in seconds
+                hints: 3,
+                clues: [
+                    { direction: 'horizontal', number: 1, clue: 'Rasa khas dari larutan asam', answer: 'ASAM', startRow: 1, startCol: 1 },
+                    { direction: 'vertical', number: 2, clue: 'Zat pembersih berbasis basa kuat', answer: 'NAOH', startRow: 0, startCol: 2 },
+                    { direction: 'horizontal', number: 3, clue: 'Warna lakmus dalam asam', answer: 'MERAH', startRow: 3, startCol: 1 },
+                    { direction: 'vertical', number: 4, clue: 'Zat dengan pH lebih dari 7', answer: 'BASA', startRow: 0, startCol: 4 },
+                    { direction: 'horizontal', number: 5, clue: 'Larutan dengan PH =7', answer: 'NETRAL', startRow: 5, startCol: 0 },
+                    { direction: 'vertical', number: 6, clue: 'Contoh asam kuat selain HCL', answer: 'HNO3', startRow: 2, startCol: 1 },
+                    { direction: 'horizontal', number: 7, clue: 'Asam klorida dikenal dengan rumus', answer: 'HCL', startRow: 1, startCol: 3 },
+                    { direction: 'vertical', number: 8, clue: 'Indikator pH yang berbentuk kertas', answer: 'LAKMUS', startRow: 0, startCol: 5 }
+                ],
+                explanations: [
+                    "1. Rasa khas dari larutan asam adalah ASAM. Larutan asam memiliki rasa masam yang khas, meskipun mencicipi larutan kimia tidak dianjurkan untuk keamanan.",
+                    "2. Zat pembersih berbasis basa kuat adalah NAOH (Natrium Hidroksida). Senyawa ini sering digunakan dalam produk pembersih karena kemampuannya melarutkan lemak.",
+                    "3. Warna lakmus dalam asam adalah MERAH. Lakmus biru akan berubah menjadi merah ketika dicelupkan ke dalam larutan asam.",
+                    "4. Zat dengan pH lebih dari 7 adalah BASA. Skala pH dari 0-14, dimana pH > 7 menunjukkan sifat basa.",
+                    "5. Larutan dengan pH = 7 adalah NETRAL. Air murni pada suhu 25°C memiliki pH tepat 7 yang menunjukkan sifat netral.",
+                    "6. Contoh asam kuat selain HCl adalah HNO3 (Asam Nitrat). Asam nitrat termasuk asam kuat yang terionisasi sempurna dalam air.",
+                    "7. Asam klorida dikenal dengan rumus HCl. Ini adalah asam kuat yang banyak digunakan di laboratorium dan industri.",
+                    "8. Indikator pH yang berbentuk kertas adalah LAKMUS. Kertas lakmus dapat berubah warna untuk menunjukkan sifat asam atau basa suatu larutan."
+                ]
+            },
+            medium: {
+                gridSize: 8,
+                timeLimit: 300, // 5 minutes in seconds
+                hints: 3,
+                clues: [
+                    { direction: 'horizontal', number: 1, clue: 'Zat yang mengubah warna indikator', answer: 'LARUTAN', startRow: 1, startCol: 0 },
+                    { direction: 'vertical', number: 2, clue: 'Indikator alami dari kol merah', answer: 'ANTOSIANIN', startRow: 0, startCol: 2 },
+                    { direction: 'horizontal', number: 3, clue: 'Basa kuat selain NaOH', answer: 'KOH', startRow: 3, startCol: 4 },
+                    { direction: 'vertical', number: 4, clue: 'Proses reaksi antara asam dan basa', answer: 'NETRALISASI', startRow: 0, startCol: 6 },
+                    { direction: 'horizontal', number: 5, clue: 'Skala pengukur tingkat keasaman', answer: 'PH', startRow: 5, startCol: 3 },
+                    { direction: 'vertical', number: 6, clue: 'Larutan asam memiliki ion dominan', answer: 'H+', startRow: 4, startCol: 1 },
+                    { direction: 'horizontal', number: 7, clue: 'Reaksi asam + basa menghasilkan garam dan', answer: 'AIR', startRow: 7, startCol: 4 },
+                    { direction: 'vertical', number: 8, clue: 'Indikator buatan berwarna oranye dalam asam', answer: 'METILMERAH', startRow: 0, startCol: 7 },
+                    { direction: 'horizontal', number: 9, clue: 'Senyawa asam lemah yang sering ditemukan di cuka', answer: 'CH3COOH', startRow: 2, startCol: 0 },
+                    { direction: 'vertical', number: 10, clue: 'Larutan sabun bersifat', answer: 'BASA', startRow: 4, startCol: 5 },
+                    { direction: 'horizontal', number: 11, clue: 'Zat netral tidak mengubah warna indikator', answer: 'AIR', startRow: 6, startCol: 0 },
+                    { direction: 'vertical', number: 12, clue: 'Zat dengan pH sangat rendah', answer: 'ASAMKUAT', startRow: 0, startCol: 4 }
+                ],
+                explanations: [
+                    "1. Zat yang mengubah warna indikator adalah LARUTAN. Larutan asam atau basa dapat mengubah warna berbagai indikator pH.",
+                    "2. Indikator alami dari kol merah adalah ANTOSIANIN. Pigmen ini memberikan warna merah/ungu pada kol merah dan dapat berubah warna tergantung pH.",
+                    "3. Basa kuat selain NaOH adalah KOH (Kalium Hidroksida). Seperti NaOH, KOH juga terionisasi sempurna dalam air.",
+                    "4. Proses reaksi antara asam dan basa disebut NETRALISASI. Reaksi ini menghasilkan garam dan air.",
+                    "5. Skala pengukur tingkat keasaman adalah PH. Skala pH ditemukan oleh Søren Sørensen pada tahun 1909.",
+                    "6. Larutan asam memiliki ion dominan H+ (ion hidrogen). Konsentrasi ion H+ menentukan tingkat keasaman suatu larutan.",
+                    "7. Reaksi asam + basa menghasilkan garam dan AIR. Ini adalah ciri khas reaksi netralisasi.",
+                    "8. Indikator buatan berwarna oranye dalam asam adalah METILMERAH. Indikator ini berubah dari merah (asam) ke kuning (basa).",
+                    "9. Senyawa asam lemah yang sering ditemukan di cuka adalah CH3COOH (Asam Asetat). Asam ini memberikan rasa masam pada cuka.",
+                    "10. Larutan sabun bersifat BASA. Sabun dibuat melalui reaksi penyabunan yang melibatkan basa kuat.",
+                    "11. Zat netral tidak mengubah warna indikator adalah AIR. Air murni dengan pH 7 tidak mengubah warna kebanyakan indikator.",
+                    "12. Zat dengan pH sangat rendah adalah ASAMKUAT. Asam kuat memiliki pH mendekati 0 dalam konsentrasi tinggi."
+                ]
+            },
+            hard: {
+                gridSize: 10,
+                timeLimit: 480, // 8 minutes in seconds
+                hints: 3,
+                clues: [
+                    { direction: 'horizontal', number: 1, clue: 'Sistem yang mempertahankan pH', answer: 'PENYANGGA', startRow: 1, startCol: 0 },
+                    { direction: 'vertical', number: 2, clue: 'Senyawa yang bisa bersifat asam dan basa', answer: 'AMFOTER', startRow: 0, startCol: 3 },
+                    { direction: 'horizontal', number: 3, clue: 'Zat asam yang hanya terion sebagian di air', answer: 'ASAM LEMAH', startRow: 3, startCol: 0 },
+                    { direction: 'vertical', number: 4, clue: 'Contoh senyawa penyangga: asam asetat dan', answer: 'NATRIUM ASETAT', startRow: 0, startCol: 6 },
+                    { direction: 'horizontal', number: 5, clue: 'Proses ionisasi parsial dalam asam lemah', answer: 'IONISASI SEBAGIAN', startRow: 5, startCol: 0 },
+                    { direction: 'vertical', number: 6, clue: 'Konjugasi basa dari asam kuat tidak bersifat basa', answer: 'NETRAL', startRow: 0, startCol: 9 },
+                    { direction: 'horizontal', number: 7, clue: 'pH larutan NaCl dalam air adalah', answer: 'TUJUH', startRow: 7, startCol: 2 },
+                    { direction: 'vertical', number: 8, clue: 'Asam kuat yang digunakan di baterai mobil', answer: 'H2SO4', startRow: 2, startCol: 1 },
+                    { direction: 'horizontal', number: 9, clue: 'Basa kuat hasil elektrolisis garam dapur', answer: 'NAOH', startRow: 9, startCol: 0 },
+                    { direction: 'vertical', number: 10, clue: 'Hasil reaksi netralisasi: garam dan', answer: 'AIR', startRow: 7, startCol: 4 },
+                    { direction: 'horizontal', number: 11, clue: 'Larutan basa memiliki ion dominan ini', answer: 'OHMIN', startRow: 2, startCol: 5 },
+                    { direction: 'vertical', number: 12, clue: 'pH = -log(H+) adalah rumus untuk', answer: 'SKALA PH', startRow: 0, startCol: 7 },
+                    { direction: 'horizontal', number: 13, clue: 'Basa lemah untuk obat maag', answer: 'MG(OH)2', startRow: 4, startCol: 2 },
+                    { direction: 'vertical', number: 14, clue: 'Senyawa basa untuk deterjen', answer: 'NH4OH', startRow: 3, startCol: 8 },
+                    { direction: 'horizontal', number: 15, clue: 'pH antara 4–6 disebut', answer: 'ASAMLEMAH', startRow: 6, startCol: 1 },
+                    { direction: 'vertical', number: 16, clue: 'pH > 11 termasuk dalam kategori', answer: 'BASAKUAT', startRow: 0, startCol: 2 }
+                ],
+                explanations: [
+                    "1. Sistem yang mempertahankan pH disebut PENYANGGA (buffer). Larutan penyangga dapat mempertahankan pH meskipun ditambah sedikit asam atau basa.",
+                    "2. Senyawa yang bisa bersifat asam dan basa disebut AMFOTER. Contohnya adalah Al(OH)3 yang dapat bereaksi dengan asam dan basa.",
+                    "3. Zat asam yang hanya terion sebagian di air adalah ASAM LEMAH. Asam lemah memiliki derajat ionisasi < 100% dalam air.",
+                    "4. Contoh senyawa penyangga: asam asetat dan NATRIUM ASETAT. Pasangan ini membentuk larutan penyangga asam.",
+                    "5. Proses ionisasi parsial dalam asam lemah disebut IONISASI SEBAGIAN. Asam lemah hanya terurai sebagian menjadi ion-ionnya.",
+                    "6. Konjugasi basa dari asam kuat tidak bersifat basa melainkan NETRAL. Contoh: Cl- (konjugasi basa dari HCl) bersifat netral.",
+                    "7. pH larutan NaCl dalam air adalah TUJUH (netral). Garam dari asam kuat dan basa kuat tidak mempengaruhi pH air.",
+                    "8. Asam kuat yang digunakan di baterai mobil adalah H2SO4 (Asam Sulfat). Asam ini sebagai elektrolit dalam aki mobil.",
+                    "9. Basa kuat hasil elektrolisis garam dapur adalah NAOH. Proses ini disebut proses klor-alkali.",
+                    "10. Hasil reaksi netralisasi: garam dan AIR. Reaksi netralisasi selalu menghasilkan kedua produk ini.",
+                    "11. Larutan basa memiliki ion dominan OHMIN (OH-). Konsentrasi ion OH- menentukan kebasaan suatu larutan.",
+                    "12. pH = -log(H+) adalah rumus untuk SKALA PH. Skala logaritmik ini mengukur konsentrasi ion H+ dalam larutan.",
+                    "13. Basa lemah untuk obat maag adalah MG(OH)2 (Magnesium Hidroksida). Senyawa ini menetralkan asam lambung berlebih.",
+                    "14. Senyawa basa untuk deterjen adalah NH4OH (Amonium Hidroksida). Senyawa ini membantu menghilangkan noda lemak.",
+                    "15. pH antara 4–6 disebut ASAMLEMAH. Rentang pH ini menunjukkan larutan asam yang tidak terlalu kuat.",
+                    "16. pH > 11 termasuk dalam kategori BASAKUAT. Basa kuat seperti NaOH memiliki pH sekitar 13-14 dalam larutan pekat."
+                ]
+            }
+        };
+
+        // Game state
+        let currentLevel = 'easy';
+        let currentGrid = [];
+        let userAnswers = [];
+        let timerInterval;
+        let timeLeft;
+        let hintsLeft;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let score = 0;
+        let timeBonus = 0;
+        let hintPenalty = 0;
+        let currentActiveCell = null;
+        let currentActiveClue = null;
+        let selectedDirection = 'horizontal';
+
+        // DOM elements
+        const screens = {
+            start: document.getElementById('start-screen'),
+            instructions: document.getElementById('instructions-screen'),
+            level: document.getElementById('level-screen'),
+            game: document.getElementById('game-screen'),
+            results: document.getElementById('results-screen'),
+            explanation: document.getElementById('explanation-screen'),
+            confirm: document.getElementById('confirm-dialog')
+        };
+
+        // Initialize the game
+        function initGame() {
+            // Hide all screens except start screen
+            Object.values(screens).forEach(screen => {
+                if (screen !== screens.start) {
+                    screen.classList.add('hidden');
+                } else {
+                    screen.classList.remove('hidden');
+                }
+            });
         }
-      }, 1000);
-      createGrid();
-    }
 
-    function createGrid() {
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      for (let i = 0; i < 6 * 6; i++) {
-        const input = document.createElement('input');
-        input.maxLength = 1;
-        input.className = 'cell';
-        input.id = 'cell' + i;
-        grid.appendChild(input);
-      }
-    }
-
-    function checkAnswers() {
-      let correct = 0;
-      for (let i in correctAnswers) {
-        const input = document.getElementById('cell' + i);
-        if (!input) continue;
-        if (input.value.toUpperCase() === correctAnswers[i]) {
-          input.classList.add('correct');
-          correct++;
-        } else {
-          input.classList.add('incorrect');
+        // Show a specific screen
+        function showScreen(screenId) {
+            // If trying to go back to game screen from results, show results instead
+            if (screenId === 'game-screen' && screens.results.classList.contains('hidden') === false) {
+                screenId = 'results-screen';
+            }
+            
+            Object.values(screens).forEach(screen => {
+                if (screen.id === screenId) {
+                    screen.classList.remove('hidden');
+                    // Special case for game screen - reset timer if paused
+                    if (screenId === 'game-screen' && timerInterval === undefined) {
+                        startTimer();
+                    }
+                } else {
+                    screen.classList.add('hidden');
+                }
+            });
         }
-      }
-      clearInterval(timerInterval);
-      const score = correct * 10 + timeLeft;
-      document.getElementById('score').textContent = `Skor Anda: ${score} (Benar: ${correct}, Bonus waktu: ${timeLeft})`;
-      showScreen('resultScreen');
-    }
 
-    function resetGrid() {
-      document.querySelectorAll('.cell').forEach(cell => {
-        cell.value = '';
-        cell.classList.remove('correct', 'incorrect');
-      });
-    }
-
-    function useHint() {
-      if (hintCount <= 0) return;
-      for (let i in correctAnswers) {
-        const input = document.getElementById('cell' + i);
-        if (input && input.value === '') {
-          input.value = correctAnswers[i];
-          hintCount--;
-          document.getElementById('hintCount').textContent = hintCount;
-          return;
+        // Start the game with a specific level
+        function startGame(level) {
+            currentLevel = level;
+            const levelData = gameData[level];
+            
+            // Set level indicator
+            let levelName = '';
+            switch(level) {
+                case 'easy': levelName = 'Mudah'; break;
+                case 'medium': levelName = 'Sedang'; break;
+                case 'hard': levelName = 'Sulit'; break;
+            }
+            document.getElementById('level-indicator').textContent = `Level ${levelName}`;
+            
+            // Initialize game state
+            timeLeft = levelData.timeLimit;
+            hintsLeft = levelData.hints;
+            correctCount = 0;
+            wrongCount = 0;
+            score = 0;
+            timeBonus = 0;
+            hintPenalty = 0;
+            
+            // Update UI
+            updateTimerDisplay();
+            document.getElementById('hint-count').textContent = hintsLeft;
+            document.getElementById('progress-indicator').textContent = `0/${levelData.clues.length} soal terjawab`;
+            
+            // Initialize grid
+            initializeGrid(levelData.gridSize, levelData.clues);
+            
+            // Generate clues list
+            generateCluesList(levelData.clues);
+            
+            // Show game screen
+            showScreen('game-screen');
+            
+            // Start timer
+            startTimer();
         }
-      }
-    }
-  </script>
+
+        // Initialize the crossword grid
+        function initializeGrid(size, clues) {
+            const gridContainer = document.getElementById('crossword-grid');
+            gridContainer.innerHTML = '';
+            gridContainer.style.gridTemplateColumns = `repeat(${size}, minmax(40px, 1fr))`;
+            
+            // Create empty grid
+            currentGrid = Array(size).fill().map(() => Array(size).fill(null));
+            userAnswers = Array(size).fill().map(() => Array(size).fill(''));
+            
+            // Mark cells that are part of clues
+            clues.forEach(clue => {
+                const { direction, answer, startRow, startCol } = clue;
+                for (let i = 0; i < answer.length; i++) {
+                    const row = direction === 'horizontal' ? startRow : startRow + i;
+                    const col = direction === 'horizontal' ? startCol + i : startCol;
+                    
+                    if (row < size && col < size) {
+                        currentGrid[row][col] = {
+                            letter: answer[i],
+                            clueNumbers: [],
+                            directions: []
+                        };
+                        
+                        // Add clue number if this is the first cell of a word
+                        if (i === 0) {
+                            currentGrid[row][col].clueNumbers.push(clue.number);
+                        }
+                        
+                        // Add direction
+                        if (!currentGrid[row][col].directions.includes(direction)) {
+                            currentGrid[row][col].directions.push(direction);
+                        }
+                    }
+                }
+            });
+            
+            // Create grid cells in DOM
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const cell = document.createElement('input');
+                    cell.type = 'text';
+                    cell.maxLength = 1;
+                    cell.className = 'grid-cell w-full h-12 text-center font-bold text-lg border border-gray-300 rounded focus:outline-none focus:border-blue-500';
+                    
+                    if (currentGrid[row][col] === null) {
+                        cell.className += ' bg-gray-200 cursor-not-allowed';
+                        cell.disabled = true;
+                    } else {
+                        cell.className += ' bg-white';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        
+                        // Add event listeners
+                        cell.addEventListener('focus', () => handleCellFocus(row, col));
+                        cell.addEventListener('input', () => handleCellInput(row, col, cell));
+                        cell.addEventListener('keydown', (e) => handleCellKeyDown(e, row, col));
+                    }
+                    
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        // Generate the clues list
+        function generateCluesList(clues) {
+            const horizontalList = document.getElementById('horizontal-clues-list');
+            const verticalList = document.getElementById('vertical-clues-list');
+            
+            horizontalList.innerHTML = '';
+            verticalList.innerHTML = '';
+            
+            // Separate horizontal and vertical clues
+            const horizontalClues = clues.filter(clue => clue.direction === 'horizontal');
+            const verticalClues = clues.filter(clue => clue.direction === 'vertical');
+            
+            // Sort by clue number
+            horizontalClues.sort((a, b) => a.number - b.number);
+            verticalClues.sort((a, b) => a.number - b.number);
+            
+            // Create horizontal clues
+            horizontalClues.forEach(clue => {
+                const clueElement = document.createElement('div');
+                clueElement.className = 'p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors';
+                clueElement.dataset.clueNumber = clue.number;
+                clueElement.dataset.direction = 'horizontal';
+                clueElement.innerHTML = `
+                    <span class="font-bold text-blue-600">${clue.number}.</span> ${clue.clue}
+                `;
+                clueElement.addEventListener('click', () => highlightClue(clue.number, 'horizontal'));
+                horizontalList.appendChild(clueElement);
+            });
+            
+            // Create vertical clues
+            verticalClues.forEach(clue => {
+                const clueElement = document.createElement('div');
+                clueElement.className = 'p-3 bg-gray-50 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors';
+                clueElement.dataset.clueNumber = clue.number;
+                clueElement.dataset.direction = 'vertical';
+                clueElement.innerHTML = `
+                    <span class="font-bold text-blue-600">${clue.number}.</span> ${clue.clue}
+                `;
+                clueElement.addEventListener('click', () => highlightClue(clue.number, 'vertical'));
+                verticalList.appendChild(clueElement);
+            });
+            
+            // Set up tab switching
+            document.getElementById('horizontal-tab').addEventListener('click', () => {
+                document.getElementById('horizontal-tab').classList.add('text-blue-600', 'border-blue-600');
+                document.getElementById('vertical-tab').classList.remove('text-blue-600', 'border-blue-600');
+                document.getElementById('horizontal-clues').classList.remove('hidden');
+                document.getElementById('vertical-clues').classList.add('hidden');
+                selectedDirection = 'horizontal';
+            });
+            
+            document.getElementById('vertical-tab').addEventListener('click', () => {
+                document.getElementById('vertical-tab').classList.add('text-blue-600', 'border-blue-600');
+                document.getElementById('horizontal-tab').classList.remove('text-blue-600', 'border-blue-600');
+                document.getElementById('vertical-clues').classList.remove('hidden');
+                document.getElementById('horizontal-clues').classList.add('hidden');
+                selectedDirection = 'vertical';
+            });
+        }
+
+        // Handle cell focus
+        function handleCellFocus(row, col) {
+            // Remove highlight from all cells
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.classList.remove('bg-blue-100');
+            });
+            
+            // Remove highlight from all clues
+            document.querySelectorAll('#horizontal-clues-list div, #vertical-clues-list div').forEach(clue => {
+                clue.classList.remove('bg-blue-100');
+            });
+            
+            // Find which clues this cell belongs to
+            const cellData = currentGrid[row][col];
+            if (cellData) {
+                // Highlight the entire word for each direction
+                cellData.directions.forEach(direction => {
+                    const clueNumber = findClueNumberForCell(row, col, direction);
+                    if (clueNumber) {
+                        highlightClue(clueNumber, direction);
+                    }
+                });
+            }
+            
+            currentActiveCell = { row, col };
+        }
+
+        // Find clue number for a cell in a specific direction
+        function findClueNumberForCell(row, col, direction) {
+            const levelData = gameData[currentLevel];
+            for (const clue of levelData.clues) {
+                if (clue.direction === direction) {
+                    const { startRow, startCol, answer } = clue;
+                    if (direction === 'horizontal' && row === startRow && col >= startCol && col < startCol + answer.length) {
+                        return clue.number;
+                    } else if (direction === 'vertical' && col === startCol && row >= startRow && row < startRow + answer.length) {
+                        return clue.number;
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Highlight a clue and its corresponding cells
+        function highlightClue(clueNumber, direction) {
+            // Remove highlight from all cells
+            document.querySelectorAll('.grid-cell').forEach(cell => {
+                cell.classList.remove('bg-blue-100');
+            });
+            
+            // Remove highlight from all clues
+            document.querySelectorAll('#horizontal-clues-list div, #vertical-clues-list div').forEach(clue => {
+                clue.classList.remove('bg-blue-100');
+            });
+            
+            // Highlight the selected clue
+            const clueElement = document.querySelector(`[data-clue-number="${clueNumber}"][data-direction="${direction}"]`);
+            if (clueElement) {
+                clueElement.classList.add('bg-blue-100');
+            }
+            
+            // Find the clue data
+            const levelData = gameData[currentLevel];
+            const clue = levelData.clues.find(c => c.number === clueNumber && c.direction === direction);
+            if (!clue) return;
+            
+            // Highlight the cells in the grid
+            const { startRow, startCol, answer } = clue;
+            for (let i = 0; i < answer.length; i++) {
+                const row = direction === 'horizontal' ? startRow : startRow + i;
+                const col = direction === 'horizontal' ? startCol + i : startCol;
+                
+                const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+                if (cell) {
+                    cell.classList.add('bg-blue-100');
+                }
+            }
+            
+            currentActiveClue = { number: clueNumber, direction };
+            selectedDirection = direction;
+            
+            // Switch tab if needed
+            if (direction === 'horizontal') {
+                document.getElementById('horizontal-tab').click();
+            } else {
+                document.getElementById('vertical-tab').click();
+            }
+            
+            // Focus on the first cell of the clue
+            const firstCell = document.querySelector(`.grid-cell[data-row="${startRow}"][data-col="${startCol}"]`);
+            if (firstCell) {
+                firstCell.focus();
+            }
+        }
+
+        // Handle cell input
+        function handleCellInput(row, col, cell) {
+            const value = cell.value.toUpperCase();
+            cell.value = value;
+            userAnswers[row][col] = value;
+            
+            // Auto-focus next cell if in a word
+            if (value && currentActiveClue) {
+                const { number, direction } = currentActiveClue;
+                const clue = gameData[currentLevel].clues.find(c => c.number === number && c.direction === direction);
+                
+                if (clue) {
+                    const { startRow, startCol, answer } = clue;
+                    const currentPos = direction === 'horizontal' ? col - startCol : row - startRow;
+                    
+                    if (currentPos < answer.length - 1) {
+                        const nextRow = direction === 'horizontal' ? row : row + 1;
+                        const nextCol = direction === 'horizontal' ? col + 1 : col;
+                        
+                        const nextCell = document.querySelector(`.grid-cell[data-row="${nextRow}"][data-col="${nextCol}"]`);
+                        if (nextCell) {
+                            nextCell.focus();
+                        }
+                    }
+                }
+            }
+            
+            // Check if all answers are filled
+            checkCompletion();
+        }
+
+        // Handle cell key down events (for navigation)
+        function handleCellKeyDown(e, row, col) {
+            const levelData = gameData[currentLevel];
+            const size = levelData.gridSize;
+            
+            // Arrow key navigation
+            if (e.key === 'ArrowUp' && row > 0) {
+                const cell = document.querySelector(`.grid-cell[data-row="${row-1}"][data-col="${col}"]`);
+                if (cell) cell.focus();
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown' && row < size - 1) {
+                const cell = document.querySelector(`.grid-cell[data-row="${row+1}"][data-col="${col}"]`);
+                if (cell) cell.focus();
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft' && col > 0) {
+                const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col-1}"]`);
+                if (cell) cell.focus();
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight' && col < size - 1) {
+                const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col+1}"]`);
+                if (cell) cell.focus();
+                e.preventDefault();
+            } else if (e.key === 'Backspace' && !e.target.value) {
+                // Move to previous cell on backspace if current is empty
+                if (selectedDirection === 'horizontal' && col > 0) {
+                    const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col-1}"]`);
+                    if (cell) cell.focus();
+                } else if (selectedDirection === 'vertical' && row > 0) {
+                    const cell = document.querySelector(`.grid-cell[data-row="${row-1}"][data-col="${col}"]`);
+                    if (cell) cell.focus();
+                }
+            } else if (e.key === 'Tab') {
+                // Switch direction on tab
+                if (currentActiveCell) {
+                    const cellData = currentGrid[currentActiveCell.row][currentActiveCell.col];
+                    if (cellData && cellData.directions.length > 1) {
+                        const currentIndex = cellData.directions.indexOf(selectedDirection);
+                        const nextDirection = cellData.directions[(currentIndex + 1) % cellData.directions.length];
+                        const clueNumber = findClueNumberForCell(currentActiveCell.row, currentActiveCell.col, nextDirection);
+                        if (clueNumber) {
+                            highlightClue(clueNumber, nextDirection);
+                        }
+                    }
+                }
+                e.preventDefault();
+            }
+        }
+
+        // Start the timer
+        function startTimer() {
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    checkAnswers();
+                }
+                
+                // Blink timer when less than 30 seconds
+                const timerElement = document.getElementById('timer');
+                if (timeLeft <= 30 && timeLeft > 0) {
+                    timerElement.classList.add('timer-animation', 'text-red-600');
+                } else {
+                    timerElement.classList.remove('timer-animation', 'text-red-600');
+                }
+            }, 1000);
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Check if all answers are filled
+        function checkCompletion() {
+            const levelData = gameData[currentLevel];
+            let answeredCount = 0;
+            let correctCount = 0;
+            
+            for (let row = 0; row < levelData.gridSize; row++) {
+                for (let col = 0; col < levelData.gridSize; col++) {
+                    if (currentGrid[row][col] !== null && userAnswers[row][col] !== '') {
+                        answeredCount++;
+                        
+                        if (userAnswers[row][col] === currentGrid[row][col].letter) {
+                            correctCount++;
+                        }
+                    }
+                }
+            }
+            
+            document.getElementById('progress-indicator').textContent = `${correctCount}/${levelData.clues.length} soal terjawab`;
+        }
+
+        // Use a hint
+        function useHint() {
+            if (hintsLeft <= 0) return;
+            
+            if (currentActiveClue) {
+                const { number, direction } = currentActiveClue;
+                const clue = gameData[currentLevel].clues.find(c => c.number === number && c.direction === direction);
+                
+                if (clue) {
+                    const { startRow, startCol, answer } = clue;
+                    
+                    // Find first empty cell in the word
+                    for (let i = 0; i < answer.length; i++) {
+                        const row = direction === 'horizontal' ? startRow : startRow + i;
+                        const col = direction === 'horizontal' ? startCol + i : startCol;
+                        
+                        if (userAnswers[row][col] === '') {
+                            // Fill in the correct letter
+                            const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+                            if (cell) {
+                                cell.value = answer[i];
+                                userAnswers[row][col] = answer[i];
+                                cell.classList.add('hint-used');
+                                
+                                // Move focus to next cell
+                                if (i < answer.length - 1) {
+                                    const nextRow = direction === 'horizontal' ? row : row + 1;
+                                    const nextCol = direction === 'horizontal' ? col + 1 : col;
+                                    const nextCell = document.querySelector(`.grid-cell[data-row="${nextRow}"][data-col="${nextCol}"]`);
+                                    if (nextCell) nextCell.focus();
+                                }
+                                
+                                // Update hints left
+                                hintsLeft--;
+                                document.getElementById('hint-count').textContent = hintsLeft;
+                                
+                                // Disable hint button if no hints left
+                                if (hintsLeft <= 0) {
+                                    document.getElementById('hint-button').classList.add('opacity-50', 'cursor-not-allowed');
+                                }
+                                
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            checkCompletion();
+        }
+
+        // Check all answers
+        function checkAnswers() {
+            clearInterval(timerInterval);
+            
+            const levelData = gameData[currentLevel];
+            let correct = 0;
+            let wrong = 0;
+            
+            // Check each cell
+            for (let row = 0; row < levelData.gridSize; row++) {
+                for (let col = 0; col < levelData.gridSize; col++) {
+                    if (currentGrid[row][col] !== null) {
+                        const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+                        if (cell) {
+                            if (userAnswers[row][col] === currentGrid[row][col].letter) {
+                                cell.classList.add('correct');
+                                correct++;
+                            } else if (userAnswers[row][col] !== '') {
+                                cell.classList.add('incorrect');
+                                wrong++;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Calculate score
+            correctCount = correct;
+            wrongCount = wrong;
+            timeBonus = Math.floor(timeLeft * 0.5);
+            hintPenalty = (levelData.hints - hintsLeft) * 5;
+            score = (correct * 10) + Math.max(0, timeBonus - hintPenalty);
+            
+            // Show results screen
+            showResults();
+        }
+
+        // Show results screen
+        function showResults() {
+            const levelData = gameData[currentLevel];
+            
+            // Update result display
+            document.getElementById('correct-answers').textContent = correctCount;
+            document.getElementById('wrong-answers').textContent = wrongCount;
+            document.getElementById('total-score').textContent = score;
+            document.getElementById('time-bonus').textContent = timeBonus;
+            document.getElementById('hint-penalty').textContent = `-${hintPenalty}`;
+            document.getElementById('final-score').textContent = score;
+            
+            // Set level result text
+            let levelName = '';
+            switch(currentLevel) {
+                case 'easy': levelName = 'Mudah'; break;
+                case 'medium': levelName = 'Sedang'; break;
+                case 'hard': levelName = 'Sulit'; break;
+            }
+            document.getElementById('level-result').textContent = `Level ${levelName}`;
+            
+            // Set feedback message
+            const feedbackElement = document.getElementById('feedback-message');
+            const percentage = (correctCount / levelData.clues.length) * 100;
+            
+            if (percentage === 100) {
+                feedbackElement.innerHTML = '<i class="fas fa-trophy mr-2"></i> Hebat, semua jawaban benar!';
+                feedbackElement.className = 'text-center p-4 rounded-lg mb-6 bg-yellow-100 text-yellow-800';
+            } else if (percentage >= 75) {
+                feedbackElement.innerHTML = '<i class="fas fa-thumbs-up mr-2"></i> Kerja bagus! Hampir sempurna.';
+                feedbackElement.className = 'text-center p-4 rounded-lg mb-6 bg-green-100 text-green-800';
+            } else if (percentage >= 50) {
+                feedbackElement.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Lumayan! Masih perlu belajar lagi.';
+                feedbackElement.className = 'text-center p-4 rounded-lg mb-6 bg-blue-100 text-blue-800';
+            } else {
+                feedbackElement.innerHTML = '<i class="fas fa-book mr-2"></i> Ayo berlatih lagi! Lihat pembahasan untuk belajar.';
+                feedbackElement.className = 'text-center p-4 rounded-lg mb-6 bg-red-100 text-red-800';
+            }
+            
+            // Show/hide next level button based on current level
+            const nextLevelButton = document.getElementById('next-level-button');
+            if (currentLevel === 'hard') {
+                nextLevelButton.innerHTML = '<i class="fas fa-redo mr-2"></i> Main Lagi';
+                nextLevelButton.onclick = function() { startGame('hard'); };
+            } else if (currentLevel === 'medium') {
+                nextLevelButton.innerHTML = '<i class="fas fa-arrow-right mr-2"></i> Lanjut ke Level Sulit';
+                nextLevelButton.onclick = function() { startGame('hard'); };
+            } else {
+                nextLevelButton.innerHTML = '<i class="fas fa-arrow-right mr-2"></i> Lanjut ke Level Sedang';
+                nextLevelButton.onclick = function() { startGame('medium'); };
+            }
+            
+            showScreen('results-screen');
+        }
+
+        // Go to next level or restart
+        function nextLevelOrRestart() {
+            if (currentLevel === 'hard') {
+                startGame('hard'); // Restart hard level
+            } else if (currentLevel === 'medium') {
+                startGame('hard'); // Go to hard level
+            } else {
+                startGame('medium'); // Go to medium level
+            }
+        }
+
+        // Show explanation screen
+        function showExplanation() {
+            const levelData = gameData[currentLevel];
+            
+            // Set level name
+            let levelName = '';
+            switch(currentLevel) {
+                case 'easy': levelName = 'Mudah'; break;
+                case 'medium': levelName = 'Sedang'; break;
+                case 'hard': levelName = 'Sulit'; break;
+            }
+            document.getElementById('explanation-level').textContent = `Level ${levelName}`;
+            
+            // Generate explanations
+            const explanationContent = document.getElementById('explanation-content');
+            explanationContent.innerHTML = '';
+            
+            levelData.explanations.forEach(explanation => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-50 p-4 rounded-lg';
+                div.innerHTML = `<p class="text-gray-800">${explanation}</p>`;
+                explanationContent.appendChild(div);
+            });
+            
+            showScreen('explanation-screen');
+        }
+
+        // Reset current answer
+        function resetCurrentAnswer() {
+            if (currentActiveClue) {
+                const { number, direction } = currentActiveClue;
+                const clue = gameData[currentLevel].clues.find(c => c.number === number && c.direction === direction);
+                
+                if (clue) {
+                    const { startRow, startCol, answer } = clue;
+                    
+                    for (let i = 0; i < answer.length; i++) {
+                        const row = direction === 'horizontal' ? startRow : startRow + i;
+                        const col = direction === 'horizontal' ? startCol + i : startCol;
+                        
+                        const cell = document.querySelector(`.grid-cell[data-row="${row}"][data-col="${col}"]`);
+                        if (cell) {
+                            cell.value = '';
+                            userAnswers[row][col] = '';
+                            cell.classList.remove('correct', 'incorrect', 'hint-used');
+                        }
+                    }
+                    
+                    // Focus on first cell of the clue
+                    const firstCell = document.querySelector(`.grid-cell[data-row="${startRow}"][data-col="${startCol}"]`);
+                    if (firstCell) firstCell.focus();
+                    
+                    checkCompletion();
+                }
+            }
+        }
+
+        // Confirm dialog functions
+        function confirmExit() {
+            document.getElementById('confirm-message').textContent = 'Apakah Anda yakin ingin keluar dari permainan?';
+            document.getElementById('confirm-action-button').innerHTML = '<i class="fas fa-door-open mr-1"></i> Ya, Keluar';
+            document.getElementById('confirm-action-button').onclick = function() {
+                hideConfirmDialog();
+                showScreen('start-screen');
+            };
+            showConfirmDialog();
+        }
+
+        function showConfirmDialog() {
+            screens.confirm.classList.remove('hidden');
+        }
+
+        function hideConfirmDialog() {
+            screens.confirm.classList.add('hidden');
+        }
+
+        function confirmAction() {
+            // Action is set when showing the dialog
+        }
+
+        // Initialize the game when page loads
+        window.onload = initGame;
+    </script>
 </body>
 </html>
